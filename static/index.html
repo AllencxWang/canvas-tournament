@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Tournament</title>
+  <link rel="stylesheet" href="https://necolas.github.io/normalize.css/8.0.0/normalize.css">
+  <style>
+    .input-zone, .output-zone {
+      margin: 10px;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 10px;
+    }
+    .team-list {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .team-list-item {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-width: 100px;
+      height: 30px;
+      margin-top: 10px;
+      margin-right: 5px;
+      padding: 5px;
+      color: #555;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      box-shadow: 1px 2px #ccc;;
+    }
+    .team-list-item:hover {
+      cursor: pointer;
+      text-decoration: line-through;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="input-zone">
+      <div>
+        <span>隊伍或選手名稱:</span>
+        <input type="text" v-model="team" @keyup.enter="add">
+        <button @click="add">加入</button>
+        <button v-if="teams.length >= 2" @click="generate">產生亂數對戰組合</button>
+      </div>
+      <div class="team-list">
+        <div class="team-list-item" v-for="(team, index) in teams" @click="remove(team)">
+          {{ team }}
+        </div>
+      </div>
+    </div>
+    <div class="output-zone">
+      <canvas id="canvas" width="1280" height="600"></canvas>
+    </div>
+  </div>
+  <script>
+    const codeA = 'A'.charCodeAt(0);
+    const app = new Vue({
+      el: '#app',
+      data: {
+        team: '',
+        teams: ['達拉斯獨行俠隊', '休士頓火箭隊', '曼斐斯灰熊隊', '紐奧良鵜鶘隊', '聖安東尼奧馬刺隊', '丹佛金塊隊', '明尼蘇達灰狼隊', '奧克拉荷馬雷霆隊', '波特蘭拓荒者隊', '猶他爵士隊', '金州勇士隊']
+        // teams: []
+      },
+      // computed: {
+      //   compTeams() {
+      //     return this.teams.map((item, index) => `(${index+1}) item`);
+      //   }
+      // },
+      methods: {
+        pad(num) {
+          return `${num}`.padStart(2, 0);
+        },
+        shuffle(arr) {
+          const shuffled = arr.map(item => item);
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            let x = shuffled[i];
+            shuffled[i] = shuffled[j];
+            shuffled[j] = x;
+          }
+          return shuffled;
+        },
+        add() {
+          const name = this.team.trim();
+          if (!name) {
+            return;
+          }
+          if (this.teams.length > 26) {
+            return alert('最多新增26個隊伍或選手');
+          }
+          if (this.teams.find(team => team === this.team)) {
+            return alert('名稱重複');
+          } 
+          this.teams.push(this.team);
+          this.team = '';
+        },
+        remove(name) {
+          this.teams = this.teams.filter(team => team !== name);
+        },
+        generate() {
+          const teams = this.shuffle(this.teams);
+          const canvas = document.getElementById('canvas');
+          
+
+          if (canvas.getContext) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = '18px Courier';
+            ctx.fillText(`隊伍代號對應表(共${teams.length}隊):`, 10, 30);
+            teams.forEach((team, index) => {
+              const code = String.fromCharCode(codeA+index);
+              const column = index % 3;
+              const row = Math.floor(index / 3);
+              
+              ctx.fillText(`(${code})${team}`, column*400+20, row*30+70);
+            });
+            
+            // ctx.fillRect(25,25,100,100);
+            // ctx.clearRect(45,45,60,60);
+            // ctx.strokeRect(50,50,50,50);
+          }
+        }
+      }
+    })
+  </script>
+</body>
+</html>
