@@ -45,7 +45,8 @@
         <span>隊伍或選手名稱:</span>
         <input type="text" v-model="team" @keyup.enter="add">
         <button @click="add">加入</button>
-        <button v-if="teams.length >= 2" @click="generate">產生亂數對戰組合</button>
+        <button v-if="teams.length >= 2" @click="generate">產生隨機對戰組合</button>
+        <input v-if="teams.length >= 2" type="checkbox" v-model="colorized">以不同顏色標記
       </div>
       <div class="team-list">
         <div class="team-list-item" v-for="(team, index) in teams" @click="remove(team)">
@@ -54,17 +55,134 @@
       </div>
     </div>
     <div class="output-zone">
-      <canvas id="canvas" width="1280" height="600"></canvas>
+      <canvas id="canvas" width="1280" height="800"></canvas>
     </div>
   </div>
   <script>
     const codeA = 'A'.charCodeAt(0);
+    // ref: https://material.io/guidelines/style/color.html#color-color-palette
+    const colorPalette = {
+      0: '#F44336',
+      1: '#673AB7',
+      2: '#03A9F4',
+      3: '#4CAF50',
+      4: '#FF9800',
+      5: '#FF5722',
+      6: '#607D8B',
+      7: '#E91E63',
+      8: '#3F51B5',
+      9: '#00BCD4',
+      10: '#8BC34A',
+      11: '#B388FF',
+      12: '#795548',
+      13: '#EA80FC',
+      14: '#2196F3',
+      15: '#009688',
+      16: '#D81B60',
+      17: '#BCAAA4',
+      18: '#FF80AB',
+      19: '#00695C',
+      20: '#01579B',
+      21: '#4A148C',
+      22: '#FFB300',
+      23: '#FF1744',
+      24: '#827717',
+      25: '#FF8A65'
+    };
+
+    const getSeedIndex = (length) => {
+      if (length%2 === 0) {
+        return -1;
+      }
+      const index = Math.floor((Math.random() * length));
+      // because arrays are zero-indexed
+      // so the index of a even number will be odd
+      // and the index of an odd number will be even
+      if (index%2) {
+        // re-elect when the index is even
+        return getSeedIndex(length);
+      } else {
+        return index;
+      }
+    };
+
+    const drawMatchUps = (ctx, blocks) => {
+      if (blocks.length === 1) {
+        return;
+      }
+      const newBlocks = [];
+      let index = getSeedIndex(blocks.length);
+      let i = 0;
+      ctx.strokeStyle = 'black';
+      while(i < blocks.length) {
+        const block = blocks[i];
+        const newBlock = {
+          y: block.y-block.h*2,
+          w: block.w,
+          h: block.h
+        };
+        if (i === index) {
+          ctx.beginPath();
+          ctx.moveTo(block.x+block.w/2, block.y);
+          ctx.lineTo(block.x+block.w/2, block.y-block.h);
+          ctx.stroke();
+          newBlock.x = block.x;
+          i += 1;
+        } else {
+          const neighbor = blocks[i+1];
+          ctx.beginPath();
+          ctx.moveTo(block.x+block.w/2, block.y); // move to the center of the block
+          ctx.lineTo(block.x+block.w/2, block.y-block.h/2); // draw | upward
+          ctx.lineTo(neighbor.x+neighbor.w/2, block.y-block.h/2); // draw - rightward
+          ctx.lineTo(neighbor.x+neighbor.w/2, neighbor.y); // draw | downward
+          
+          const centerX = (block.x+block.w/2+neighbor.x+neighbor.w/2)/2;
+          ctx.moveTo(centerX, neighbor.y-neighbor.h/2); // move to the center of the inter-connected line
+          ctx.lineTo(centerX, neighbor.y-neighbor.h); // draw | upward
+          ctx.stroke();
+          newBlock.x = centerX-block.w/2;
+          i += 2;
+        }
+        ctx.strokeRect(newBlock.x, newBlock.y, newBlock.w, newBlock.h);
+        newBlocks.push(newBlock);
+      }
+      drawMatchUps(ctx, newBlocks);
+    };
+
     const app = new Vue({
       el: '#app',
       data: {
         team: '',
-        teams: ['達拉斯獨行俠隊', '休士頓火箭隊', '曼斐斯灰熊隊', '紐奧良鵜鶘隊', '聖安東尼奧馬刺隊', '丹佛金塊隊', '明尼蘇達灰狼隊', '奧克拉荷馬雷霆隊', '波特蘭拓荒者隊', '猶他爵士隊', '金州勇士隊']
-        // teams: []
+        // teams: [
+        //   '達拉斯獨行俠隊', 
+        //   '休士頓火箭隊', 
+        //   '曼斐斯灰熊隊', 
+        //   '紐奧良鵜鶘隊', 
+        //   '聖安東尼奧馬刺隊', 
+        //   '丹佛金塊隊', 
+        //   '沙加緬度國王隊', 
+        //   '奧克拉荷馬雷霆隊', 
+        //   '波特蘭拓荒者隊', 
+        //   '猶他爵士隊', 
+        //   '金州勇士隊',
+        //   '鳳凰城太陽隊',
+        //   '夏洛特黃蜂隊',
+        //   '洛杉磯湖人隊',
+        //   '紐約尼克隊',
+        //   '波士頓賽爾提克隊',
+        //   '紐澤西籃網隊',
+        //   '費城七六人隊',
+        //   '芝加哥公牛隊',
+        //   '印第安納步行者隊',
+        //   '克里夫蘭騎士隊',
+        //   '多倫多暴龍隊',
+        //   '邁阿密熱火隊',
+        //   '明尼蘇達灰狼隊',
+        //   '密爾瓦基公鹿隊',
+        //   '洛杉磯快艇隊'
+        // ],
+        teams: [],
+        colorized: true
       },
       // computed: {
       //   compTeams() {
@@ -76,9 +194,10 @@
           return `${num}`.padStart(2, 0);
         },
         shuffle(arr) {
+          // ref: https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
           const shuffled = arr.map(item => item);
-          for (let i = shuffled.length - 1; i > 0; i--) {
-            let j = Math.floor(Math.random() * (i + 1));
+          for (let i = shuffled.length-1; i > 0; i--) {
+            let j = Math.floor(Math.random()*(i+1));
             let x = shuffled[i];
             shuffled[i] = shuffled[j];
             shuffled[j] = x;
@@ -90,7 +209,7 @@
           if (!name) {
             return;
           }
-          if (this.teams.length > 26) {
+          if (this.teams.length === 26) {
             return alert('最多新增26個隊伍或選手');
           }
           if (this.teams.find(team => team === this.team)) {
@@ -105,24 +224,48 @@
         generate() {
           const teams = this.shuffle(this.teams);
           const canvas = document.getElementById('canvas');
-          
-
           if (canvas.getContext) {
             const ctx = canvas.getContext('2d');
+            const blockWidth = canvas.width/teams.length;
+            const blockHeight = 50;
+            const baseX = 5;
+            const baseY = canvas.height-blockHeight;
+            const blockGap = 10;
+            const blocks = [];
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.font = '18px Courier';
+            ctx.font = '16pt Courier';
+            ctx.fillStyle = 'black';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 3;
             ctx.fillText(`隊伍代號對應表(共${teams.length}隊):`, 10, 30);
             teams.forEach((team, index) => {
               const code = String.fromCharCode(codeA+index);
-              const column = index % 3;
-              const row = Math.floor(index / 3);
-              
+              const column = index%3;
+              const row = Math.floor(index/3);
+              if (this.colorized) {
+                ctx.fillStyle = colorPalette[index];
+                ctx.strokeStyle = colorPalette[index];
+              }
+              // draw mapping table
               ctx.fillText(`(${code})${team}`, column*400+20, row*30+70);
+              // draw blocks
+              const block = {
+                x: baseX+index*blockWidth,
+                y: baseY,
+                w: blockWidth-blockGap,
+                h: blockHeight-blockGap
+              };
+              blocks.push(block);
+              ctx.strokeRect(block.x, block.y, block.w, block.h);
+
+              // align text to the center of a block
+              const text = `(${code})`;
+              const textWidth = ctx.measureText(text).width;
+              const offsetX = blockWidth/2-textWidth/3*2;
+              const offsetY = blockHeight/2;
+              ctx.fillText(text, block.x+offsetX, block.y+offsetY);
             });
-            
-            // ctx.fillRect(25,25,100,100);
-            // ctx.clearRect(45,45,60,60);
-            // ctx.strokeRect(50,50,50,50);
+            drawMatchUps(ctx, blocks);
           }
         }
       }
