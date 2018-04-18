@@ -42,11 +42,12 @@
   <div id="app">
     <div class="input-zone">
       <div>
-        <span>隊伍或選手名稱:</span>
+        <span>Team/Player Name:</span>
         <input type="text" v-model="team" @keyup.enter="add">
-        <button @click="add">加入</button>
-        <button v-if="teams.length >= 2" @click="generate">產生隨機對戰組合</button>
-        <input v-if="teams.length >= 2" type="checkbox" v-model="colorized">以不同顏色標記
+        <button @click="add">Add</button>
+        <button v-if="drawable" @click="generate">Generate Matchups</button>
+        <input id="checkbox" type="checkbox" v-if="drawable" v-model="colorized">
+        <label for="checkbox" v-if="drawable">Colorize</label>
       </div>
       <div class="team-list">
         <div class="team-list-item" v-for="(team, index) in teams" @click="remove(team)">
@@ -153,42 +154,14 @@
       el: '#app',
       data: {
         team: '',
-        // teams: [
-        //   '達拉斯獨行俠隊', 
-        //   '休士頓火箭隊', 
-        //   '曼斐斯灰熊隊', 
-        //   '紐奧良鵜鶘隊', 
-        //   '聖安東尼奧馬刺隊', 
-        //   '丹佛金塊隊', 
-        //   '沙加緬度國王隊', 
-        //   '奧克拉荷馬雷霆隊', 
-        //   '波特蘭拓荒者隊', 
-        //   '猶他爵士隊', 
-        //   '金州勇士隊',
-        //   '鳳凰城太陽隊',
-        //   '夏洛特黃蜂隊',
-        //   '洛杉磯湖人隊',
-        //   '紐約尼克隊',
-        //   '波士頓賽爾提克隊',
-        //   '紐澤西籃網隊',
-        //   '費城七六人隊',
-        //   '芝加哥公牛隊',
-        //   '印第安納步行者隊',
-        //   '克里夫蘭騎士隊',
-        //   '多倫多暴龍隊',
-        //   '邁阿密熱火隊',
-        //   '明尼蘇達灰狼隊',
-        //   '密爾瓦基公鹿隊',
-        //   '洛杉磯快艇隊'
-        // ],
         teams: [],
         colorized: true
       },
-      // computed: {
-      //   compTeams() {
-      //     return this.teams.map((item, index) => `(${index+1}) item`);
-      //   }
-      // },
+      computed: {
+        drawable() {
+          return this.teams.length >= 2;
+        }
+      },
       methods: {
         pad(num) {
           return `${num}`.padStart(2, 0);
@@ -210,10 +183,10 @@
             return;
           }
           if (this.teams.length === 26) {
-            return alert('最多新增26個隊伍或選手');
+            return alert('max teams/players: 26');
           }
           if (this.teams.find(team => team === this.team)) {
-            return alert('名稱重複');
+            return alert('name conflict');
           } 
           this.teams.push(this.team);
           this.team = '';
@@ -237,7 +210,7 @@
             ctx.fillStyle = 'black';
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 3;
-            ctx.fillText(`隊伍代號對應表(共${teams.length}隊):`, 10, 30);
+            ctx.fillText(`Teams/Players Mapping Table (total:${teams.length})`, 10, 30);
             teams.forEach((team, index) => {
               const code = String.fromCharCode(codeA+index);
               const column = index%3;
