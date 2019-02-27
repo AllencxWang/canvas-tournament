@@ -1,6 +1,6 @@
 canvas-tournament
 =====
-to randomly generate and draw matchups for a tournament using canvas, here's the (demo)[]
+to randomly generate and draw matchups for a tournament using canvas
 
 
 # deploy to heroku
